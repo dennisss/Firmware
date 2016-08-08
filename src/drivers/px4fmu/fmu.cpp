@@ -2085,7 +2085,7 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 				} else if (pwm->values[i] < PWM_LOWEST_MAX) {
 					_max_pwm[i] = PWM_LOWEST_MAX;
 
-				} else if (pwm->values[i] > PWM_HIGHEST_MAX) {
+				} else if (i < 4 && pwm->values[i] > PWM_HIGHEST_MAX) {
 					_max_pwm[i] = PWM_HIGHEST_MAX;
 
 				} else {
@@ -2175,15 +2175,17 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 
 	/* FALLTHROUGH */
 	case PWM_SERVO_SET(1):
-	case PWM_SERVO_SET(0):
-		if (arg <= 2100) {
-			up_pwm_servo_set(cmd - PWM_SERVO_SET(0), arg);
+	case PWM_SERVO_SET(0): {
+		unsigned channel = cmd - PWM_SERVO_SET(0);
+		if (channel >= 4 || arg <= 2100) {
+			up_pwm_servo_set(channel, arg);
 
 		} else {
 			ret = -EINVAL;
 		}
 
 		break;
+	}
 
 #if defined(BOARD_HAS_PWM) && BOARD_HAS_PWM >= 8
 
