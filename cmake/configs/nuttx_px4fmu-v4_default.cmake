@@ -72,6 +72,7 @@ set(config_module_list
 	systemcmds/mtd
 	systemcmds/dumpfile
 	systemcmds/ver
+	systemcmds/motor_test
 	systemcmds/sd_bench
 	systemcmds/motor_ramp
 
@@ -192,6 +193,9 @@ set(config_module_list
 
 	# EKF
 	examples/ekf_att_pos_estimator
+
+	# MAV IO
+	modules/iolink
 )
 
 set(config_extra_builtin_cmds
