@@ -50,6 +50,7 @@
 #include <nuttx/fs/ioctl.h>
 
 #include "drivers/drv_pwm_output.h"
+//#include <drivers/drv_gpio.h>
 
 
 #include <uORB/uORB.h>
@@ -94,11 +95,19 @@ int iolink_thread_main(int argc, char *argv[]) {
 	int ret;
 	const char *dev = PWM_OUTPUT0_DEVICE_PATH;
 
+
 	/* Open PWM driver */
 	int fd = open(dev, 0);
 	if (fd < 0) {
 		err(1, "can't open %s", dev);
 	}
+
+	/* Open the GPIO driver */
+	//int fd_gpio = open(PX4FMU_DEVICE_PATH, 0);
+	//if (fd < 0) {
+	//	err(1, "can't open %s", dev);
+	//}
+
 
 	/* Set PWM range to 0% to 100% duty cycle for 50Hz */
 	struct pwm_output_values pwm_values;
@@ -159,13 +168,34 @@ int iolink_thread_main(int argc, char *argv[]) {
 				if (cmd.command == VEHICLE_CMD_DO_SET_SERVO) {
 					PX4_INFO("Setting Servo");
 
-					unsigned val = ((float)cmd.param1) * 20000;
 
-					ret = ioctl(fd, PWM_SERVO_SET(5), val);
+					unsigned val1 = ((float)cmd.param1) * 20000,
+							 val2 = ((float)cmd.param2) * 20000;
 
+					PX4_INFO("%d %d", val1, val2);
+
+					if(val1 > 20000) val1 = 20000;
+					else if(val1 < 90) val1 = 90;
+
+					if(val2 > 20000) val2 = 20000;
+					else if(val2 < 90) val2 = 90;
+
+					//bool val3 = ((int)cmd.param3) != 0;
+
+					ret = ioctl(fd, PWM_SERVO_SET(4), val1);
+					if (ret != OK) {
+						err(1, "PWM_SERVO_SET(%d)", 4);
+					}
+
+					ret = ioctl(fd, PWM_SERVO_SET(5), val2);
 					if (ret != OK) {
 						err(1, "PWM_SERVO_SET(%d)", 5);
 					}
+
+
+					//if()
+					//ioctl(priv->gpio_fd, GPIO_SET, priv->pin);
+
 				}
 			}
 
