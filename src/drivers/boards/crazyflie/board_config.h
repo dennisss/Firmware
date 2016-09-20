@@ -58,6 +58,28 @@
 /* Configuration ************************************************************************************/
 
 /* Crazyflie GPIOs **********************************************************************************/
+
+/*
+ * Expansion port mappings
+ */
+/* Left side (pins 2-9) */
+#define EXPANSION_RX1	(GPIO_PORTC|GPIO_PIN11)
+#define EXPANSION_TX1	(GPIO_PORTC|GPIO_PIN10)
+#define EXPANSION_SDA	(GPIO_PORTB|GPIO_PIN7)
+#define EXPANSION_SCL	(GPIO_PORTB|GPIO_PIN6)
+#define EXPANSION_IO_1	(GPIO_PORTB|GPIO_PIN8)
+#define EXPANSION_IO_2	(GPIO_PORTB|GPIO_PIN5)
+#define EXPANSION_IO_3	(GPIO_PORTB|GPIO_PIN4)
+#define EXPANSION_IO_4	(GPIO_PORTC|GPIO_PIN12)
+
+/* Right side (pins 1-5) */
+#define EXPANSION_TX2 (GPIO_PORTA|GPIO_PIN2)
+#define EXPANSION_RX2 (GPIO_PORTA|GPIO_PIN3)
+#define EXPANSION_SCK (GPIO_PORTA|GPIO_PIN5)
+#define EXPANSION_MISO (GPIO_PORTA|GPIO_PIN6)
+#define EXPANSION_MOSI (GPIO_PORTA|GPIO_PIN7)
+
+
 /* LEDs */
 
 
@@ -123,12 +145,53 @@
 #define ADC_BATTERY_CURRENT_CHANNEL	((uint8_t)(-1))
 #define ADC_AIRSPEED_VOLTAGE_CHANNEL	((uint8_t)(-1))
 
+
+/*
+ *	SPI1 is exposed externally
+ */
+
+/* Use these in place of the spi_dev_e enumeration to select a specific SPI device on SPI1 */
+#define PX4_SPIDEV_DW			1
+
+
+
+
 /* Tone alarm output : These are only applicable when the buzzer deck is attached */
 #define TONE_ALARM_TIMER	5	/* timer 5 */
 #define TONE_ALARM_CHANNEL 3	/* channel 3 */
 #define GPIO_TONE_ALARM_IDLE	(GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTA|GPIO_PIN2)
 #define GPIO_TONE_ALARM		(GPIO_ALT|GPIO_AF2|GPIO_SPEED_2MHz|GPIO_PUSHPULL|GPIO_PORTA|GPIO_PIN2)
 #define GPIO_TONE_ALARM_NEG (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_OUTPUT_CLEAR|GPIO_PORTA|GPIO_PIN3)
+
+/* DW1000 */
+#define GPIO_SPI_CS_DW1000		(GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_SET|EXPANSION_IO_1)
+#define GPIO_DRDY_DW1000 (EXPANSION_RX1)
+#define GPIO_RST_DW1000 (EXPANSION_TX1)
+
+
+
+
+/*
+ *  Define the ability to shut off off the sensor signals
+ *  by changing the signals to inputs
+ */
+
+#define _PIN_OFF(def) (((def) & (GPIO_PORT_MASK | GPIO_PIN_MASK)) | (GPIO_INPUT|GPIO_PULLDOWN|GPIO_SPEED_2MHz))
+
+#define GPIO_SPI_CS_OFF_DW1000		_PIN_OFF(GPIO_SPI_CS_DW1000)
+
+#define GPIO_DRDY_OFF_DW1000		_PIN_OFF(GPIO_DRDY_DW1000)
+
+/* SPI1 off */
+#define GPIO_SPI1_SCK_OFF	_PIN_OFF(GPIO_SPI1_SCK)
+#define GPIO_SPI1_MISO_OFF	_PIN_OFF(GPIO_SPI1_MISO)
+#define GPIO_SPI1_MOSI_OFF	_PIN_OFF(GPIO_SPI1_MOSI)
+
+//#define PX4_SPI_BUS_SENSORS	1
+//#define PX4_SPI_BUS_RAMTRON	2
+//#define PX4_SPI_BUS_BARO	PX4_SPI_BUS_RAMTRON
+
+
 
 /* PWM
 *

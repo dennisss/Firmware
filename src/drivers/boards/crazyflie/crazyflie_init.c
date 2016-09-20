@@ -45,7 +45,7 @@
  * Included Files
  ****************************************************************************/
 
-#include <nuttx/config.h>
+#include <px4_config.h>
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -128,6 +128,9 @@ __END_DECLS
 __EXPORT void
 stm32_boardinitialize(void)
 {
+	/* configure SPI interfaces */
+	stm32_spiinitialize();
+
 	/* configure LEDs */
 	up_ledinit();
 }
@@ -139,6 +142,8 @@ stm32_boardinitialize(void)
  *   Perform architecture specific initialization
  *
  ****************************************************************************/
+
+static struct spi_dev_s *spi1;
 
 #include <math.h>
 
@@ -179,7 +184,22 @@ __EXPORT int nsh_archinitialize(void)
 	led_off(LED_TX);
 	led_off(LED_RX);
 
+	/* Configure SPI-based devices */
 
+	spi1 = px4_spibus_initialize(1);
+
+	if (!spi1) {
+		message("[boot] FAILED to initialize SPI port 1\n");
+		up_ledon(LED_RED);
+		return -ENODEV;
+	}
+
+	/* Default SPI1 to 1MHz and de-assert the known chip selects. */
+	SPI_SETFREQUENCY(spi1, 10000000);
+	SPI_SETBITS(spi1, 8);
+	SPI_SETMODE(spi1, SPIDEV_MODE3);
+	SPI_SELECT(spi1, PX4_SPIDEV_DW, false);
+	up_udelay(20);
 
 	result = board_i2c_initialize();
 
