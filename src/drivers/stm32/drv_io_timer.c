@@ -380,8 +380,22 @@ static int allocate_channel(unsigned channel, io_timer_channel_mode_t mode)
 static int timer_set_rate(unsigned timer, unsigned rate)
 {
 #if defined(CONFIG_ARCH_BOARD_CRAZYFLIE)
-	/* configure the timer to update at 328.125 kHz (recommended) */
-	rARR(timer) = 255;
+
+	/* Configurate alternative timer for low frequencies : used for making audible tones */
+	if (rate < 10000) {
+		/* 84 / 5 = 16.8Mhz timer */
+		rPSC(timer) = 5 - 1;
+
+		rARR(timer) = 168000000 / rate;
+	}
+	else {
+		/* back to default 84MHz clock */
+		rPSC(timer) = 0;
+
+		/* configure the timer to update at 328.125 kHz (recommended for motors) */
+		rARR(timer) = 255;
+	}
+
 #else
 	/* configure the timer to update at the desired rate */
 	rARR(timer) = 1000000 / rate;
@@ -434,7 +448,7 @@ static int io_timer_init_timer(unsigned timer)
 
 #if defined(CONFIG_ARCH_BOARD_CRAZYFLIE)
 		/* configure the timer to free-run at timer frequency */
-		rPSC(timer) = 0;
+		rPSC(timer) = 0; // TODO: Set to (5 - 1) during beeping mode to divide the clock frequency by 5
 #else
 		/* configure the timer to free-run at 1MHz */
 

@@ -38,4 +38,5 @@ fi
 set PWM_MIN none
 set PWM_MAX none
 set PWM_DISARMED none
-set PWM_RATE 500
+# Will be mixed at the fmu max of 500Hz
+set PWM_RATE 328125

@@ -124,9 +124,12 @@ int up_pwm_servo_set_rate_group_update(unsigned group, unsigned rate)
 		return -ERANGE;
 	}
 
+#if !defined(CONFIG_ARCH_BOARD_CRAZYFLIE)
+
 	if (rate > 10000) {
 		return -ERANGE;
 	}
+#endif
 
 	if ((group >= MAX_IO_TIMERS) || (io_timers[group].base == 0)) {
 		return ERROR;
