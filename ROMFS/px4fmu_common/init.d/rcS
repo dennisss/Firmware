@@ -623,6 +623,9 @@ then
 		fi
 	fi
 
+	# Start right after setting up fmu
+	iolink start
+
 	if [ $MAVLINK_F == default ]
 	then
 		# Normal mode, use baudrate 57600 (default) and data rate 1000 bytes/s
