@@ -61,7 +61,11 @@
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/parameter_update.h>
 
+// PE1 is TX/Out PE0 is RX/In
+#define GPIO_ACTIVE_IR (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTE|GPIO_PIN1)
 
+#define VEHICLE_CMD_USER_1 31010
+#define VEHICLE_CMD_BEACON VEHICLE_CMD_USER_1
 
 static int _iolink_task;
 
@@ -102,30 +106,28 @@ int iolink_thread_main(int argc, char *argv[]) {
 		err(1, "can't open %s", dev);
 	}
 
-	/* Open the GPIO driver */
-	//int fd_gpio = open(PX4FMU_DEVICE_PATH, 0);
-	//if (fd < 0) {
-	//	err(1, "can't open %s", dev);
-	//}
-
+	/* Configure gpio for active IR */
+	px4_arch_configgpio(GPIO_ACTIVE_IR);
 
 	/* Set PWM range to 0% to 100% duty cycle for 50Hz */
 	struct pwm_output_values pwm_values;
 	memset(&pwm_values, 0, sizeof(pwm_values));
 	pwm_values.channel_count = 6; // servo_count;
-	pwm_values.values[4] = 90;
-	pwm_values.values[5] = 90;
+	pwm_values.values[4] = 2;
+	pwm_values.values[5] = 2;
 	ret = ioctl(fd, PWM_SERVO_SET_MIN_PWM, (long unsigned int)&pwm_values);
 	if (ret != OK) {
 		errx(ret, "failed setting min values");
 	}
 
-	pwm_values.values[4] = 20000;
-	pwm_values.values[5] = 20000;
+	pwm_values.values[4] = 2500;
+	pwm_values.values[5] = 2500;
 	ret = ioctl(fd, PWM_SERVO_SET_MAX_PWM, (long unsigned int)&pwm_values);
 	if (ret != OK) {
 		errx(ret, "failed setting max values");
 	}
+
+
 
 
 	/* Subscribe to commands */
@@ -169,16 +171,16 @@ int iolink_thread_main(int argc, char *argv[]) {
 					PX4_INFO("Setting Servo");
 
 
-					unsigned val1 = ((float)cmd.param1) * 20000,
-							 val2 = ((float)cmd.param2) * 20000;
+					unsigned val1 = ((float)cmd.param1) * 2500,
+							 val2 = ((float)cmd.param2) * 2500;
 
 					PX4_INFO("%d %d", val1, val2);
 
-					if(val1 > 20000) val1 = 20000;
-					else if(val1 < 90) val1 = 90;
+					if(val1 > 2500) val1 = 2500;
+					else if(val1 < 2) val1 = 2;
 
-					if(val2 > 20000) val2 = 20000;
-					else if(val2 < 90) val2 = 90;
+					if(val2 > 2500) val2 = 20000;
+					else if(val2 < 2) val2 = 2;
 
 					//bool val3 = ((int)cmd.param3) != 0;
 
@@ -196,7 +198,11 @@ int iolink_thread_main(int argc, char *argv[]) {
 					//if()
 					//ioctl(priv->gpio_fd, GPIO_SET, priv->pin);
 
+				} else if (cmd.command == VEHICLE_CMD_BEACON) {
+					bool on = (int)cmd.param1? true : false;
+					px4_arch_gpiowrite(GPIO_ACTIVE_IR, on);
 				}
+
 			}
 
 		}

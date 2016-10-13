@@ -82,7 +82,7 @@ then
 		#
 		if [ $PWM_RATE != none ]
 		then
-			pwm rate -c ${PWM_OUT} -r ${PWM_RATE}
+			pwm rate -a -r $PWM_RATE
 		fi
 
 		#
