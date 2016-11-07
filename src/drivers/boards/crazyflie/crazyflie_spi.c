@@ -120,10 +120,7 @@ __EXPORT void board_spi_reset(int ms)
 	px4_arch_configgpio(GPIO_SPI1_MOSI);
 
 	// // XXX bring up the EXTI pins again
-	// px4_arch_configgpio(GPIO_GYRO_DRDY);
-	// px4_arch_configgpio(GPIO_MAG_DRDY);
-	// px4_arch_configgpio(GPIO_ACCEL_DRDY);
-	// px4_arch_configgpio(GPIO_EXTI_MPU_DRDY);
+	// px4_arch_configgpio(GPIO_DRDY_DW1000);
 
 #endif
 

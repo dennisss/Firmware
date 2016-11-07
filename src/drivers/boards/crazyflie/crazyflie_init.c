@@ -147,8 +147,16 @@ static struct spi_dev_s *spi1;
 
 #include <math.h>
 
+
+//#define GPIO_RST_DW1000_CLEAR (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_CLEAR|EXPANSION_TX1)
+
+
 __EXPORT int nsh_archinitialize(void)
 {
+	// TODO: Conditionally do this if the board is detected (then wait >13us to setup the SPI interface)
+
+	px4_arch_configgpio(GPIO_RST_DW1000);
+
 	int result;
 
 	/* configure the high-resolution time/callout interface */
@@ -194,12 +202,13 @@ __EXPORT int nsh_archinitialize(void)
 		return -ENODEV;
 	}
 
-	/* Default SPI1 to 1MHz and de-assert the known chip selects. */
-	SPI_SETFREQUENCY(spi1, 10000000);
+	/* Default SPI1 to 20MHz and de-assert the known chip selects. */
+	SPI_SETFREQUENCY(spi1, 20 * 1000 * 1000); // 20Mhz max speed of DW1000 in IDLE mode
 	SPI_SETBITS(spi1, 8);
-	SPI_SETMODE(spi1, SPIDEV_MODE3);
+	SPI_SETMODE(spi1, SPIDEV_MODE0);
 	SPI_SELECT(spi1, PX4_SPIDEV_DW, false);
 	up_udelay(20);
+
 
 	result = board_i2c_initialize();
 

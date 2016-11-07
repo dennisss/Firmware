@@ -14,6 +14,7 @@ set(config_module_list
 	drivers/mpu9250
 	drivers/lps25h
 	drivers/gps
+	drivers/dw1000
 	modules/sensors
 
 	#
