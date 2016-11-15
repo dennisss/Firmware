@@ -73,6 +73,13 @@ Bring RSTn pin positive to power on the device
 
 #define DW1000_SYS_TIME 0x06 // System Time Counter (40-bit)
 #define DW1000_TX_FCTRL 0x08 // Transmit Frame Control
+#  define DW1000_TXBR_110K (0b00 << 13)
+#  define DW1000_TXBR_850K (0b01 << 13)
+#  define DW1000_TXBR_68M (0b10 << 13)
+#  define DW1000_TXPRF_4M (0b00 << 16)
+#  define DW1000_TXPRF_16M (0b01 << 16)
+#  define DW1000_TXPRF_64M (0b10 << 16)
+
 #define DW1000_TX_BUFFER 0x09 // Transmit Data Buffer
 #define DW1000_DX_TIME 0x0A // Delayed Send or Receive Time (40-bit)
 #define DW1000_RX_FWTO 0x0C // Receive Frame Wait Timeout Period
@@ -141,6 +148,10 @@ Bring RSTn pin positive to power on the device
 #define DW1000_SPI_BUS_SPEED 20*1000*1000 /* will be rounded to 10.4 MHz, within margins for MPU9250 */
 
 
+// Timestamps are 5bytes long
+
+typedef int64_t dw1000_time_t;
+
 
 class DW1000 : public device::SPI
 {
@@ -150,10 +161,10 @@ public:
 
 	virtual int	init();
 
-	virtual int	read(unsigned address, void *data, unsigned count);
-	virtual int	write(unsigned address, void *data, unsigned count);
+//	virtual int	read(unsigned address, void *data, unsigned count);
+//	virtual int	write(unsigned address, void *data, unsigned count);
 
-	int write(unsigned address, unsigned sub, void *data, unsigned count);
+//	int write(unsigned address, unsigned sub, void *data, unsigned count);
 
 //	virtual int	ioctl(unsigned operation, unsigned &arg);
 
@@ -164,9 +175,20 @@ public:
 	void reset();
 
 	// TODO: We want to avoid copying, so buffer should be big enough to hold the index as well
-	int read_register(uint8_t id, uint16_t index, char *buffer, int length);
-	int write_register(uint8_t id, uint16_t index, char *buffer, int length);
+	int read_register(uint8_t reg, uint16_t sub, char *buffer, int length);
+	int write_register(uint8_t reg, uint16_t sub, const char *buffer, int length);
 
+	void transmit(const char *buf, unsigned len, bool delay = false);
+
+
+	// Gets the 8byte long id used for long addressing of the module
+	uint64_t get_eui();
+
+	void set_addr(uint16_t pan, uint16_t addr);
+	dw1000_time_t get_system_time();
+	void set_delayed_time(dw1000_time_t t);
+	dw1000_time_t get_receive_time();
+	dw1000_time_t get_transmit_time();
 
 protected:
 	virtual int probe();

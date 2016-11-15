@@ -37,6 +37,13 @@
 
 /*
 	TODO: Support both TOA and TDOA
+
+	For TOA, LPE needs
+	- Beacon location, and distance to beacon
+
+	For TDOA, we need to give LPE messages like:
+	- Beacon location, receive time
+
 */
 
 // Mode defined by configuration of GPIO5 and GPIO6 on the board. (not connected/low defaults to MODE0)
@@ -54,7 +61,6 @@ DW1000::~DW1000()
 int
 DW1000::init()
 {
-	PX4_INFO("INIT");
 
 	// TODO: Need to setup reset pin
 
@@ -116,6 +122,13 @@ DW1000::init()
 	return OK;
 }
 
+void
+DW1000::reset()
+{
+
+
+}
+
 
 
 #define DIR_READ 0
@@ -151,7 +164,7 @@ dw1000_spi_header(unsigned dir, unsigned reg, unsigned sub, void *data)
 }
 
 
-int DW1000::write_register(unsigned reg, unsigned sub, void *data, unsigned count)
+int DW1000::write_register(uint8_t reg, uint16_t sub, const char *buffer, int length)
 {
 	uint8_t cmd[128];//MPU_MAX_WRITE_BUFFER_SIZE];
 
@@ -169,7 +182,7 @@ int DW1000::write_register(unsigned reg, unsigned sub, void *data, unsigned coun
 
 
 int
-DW1000::read_register(unsigned reg, unsigned sub, void *data, unsigned count)
+DW1000::read_register(uint8_t reg, uint16_t sub, char *buffer, int length)
 {
 	uint8_t cmd[128];
 
@@ -191,7 +204,7 @@ DW1000::probe()
 {
 	uint32_t whoami = 0;
 	uint32_t expected = DW1000_DEV_ID_RESPONSE;
-	int r = (read(DW1000_DEV_ID, 0, &whoami, 4) == OK && (whoami == expected)) ? 0 : -EIO;
+	int r = (read_register(DW1000_DEV_ID, 0, &whoami, 4) == OK && (whoami == expected)) ? 0 : -EIO;
 
 	PX4_INFO("%08X", whoami);
 
@@ -199,10 +212,55 @@ DW1000::probe()
 }
 
 void
-DW1000::reset()
+DW1000::transmit(const char *buf, unsigned len, bool delay = false)
 {
+	uint32_t fc = 0;
+	write_register(DW1000_TX_FCTRL, 0, &fc, 4);
 
+	write_register(DW_1000_TX_BUFFER, 0, buf, len);
 
+	uint32_t ctrl = DW1000_TXSTRT | (delay? DW1000_TXDLYS : 0);
+	write_register(DW1000_SYS_CTRL, 0, &ctrl, 4);
+}
+
+void
+DW1000::set_addr(uint16_t pan, uint16_t addr)
+{
+	uint32_t val;
+	memcpy(&val, addr, 2);
+	memcpy(((char *)&val) + 2. pan, 2);
+
+	write_register(DW1000_PANADR, 0, &val, 4);
+}
+
+dw1000_time_t
+DW1000::get_system_time()
+{
+	dw1000_time_t t;
+	read_register(DW1000_SYS_TIME, 0, &t, 5);
+	return t;
+}
+
+void
+DW1000::set_delayed_time(dw1000_time_t t)
+{
+	write_register(DW1000_DX_TIME, 0, &t, 5);
+}
+
+dw1000_time_t
+DW1000::get_receive_time()
+{
+	dw1000_time_t t;
+	read_register(DW1000_RX_TIME, 0, &t, 5);
+	return t;
+}
+
+dw1000_time_t
+DW1000::get_transmit_time()
+{
+	dw1000_time_t t;
+	read_register(DW1000_TX_TIME, 0, &t, 5);
+	return t;
 }
 
 void
@@ -213,6 +271,7 @@ DW1000::setup_leds()
 	// Sub-register GPIO_MODE 0
 	write(DW1000_GPIO_CTRL, 0, &val, 4);
 }
+
 
 
 /*

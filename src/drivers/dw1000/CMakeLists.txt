@@ -38,6 +38,8 @@ px4_add_module(
 	SRCS
 		dw1000_main.cpp
 		dw1000.cpp
+		dw1000_params.c
+		mac802154.cpp
 	DEPENDS
 		platforms__common
 	)
