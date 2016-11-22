@@ -2065,6 +2065,7 @@ Mavlink::task_main(int argc, char *argv[])
 	case MAVLINK_MODE_MAGIC:
 		//stream nothing not vital to monitoring system health
 		configure_stream("SYS_STATUS", 0.5f);
+		configure_stream("ATTITUDE_QUATERNION", 10.0f);
 		break;
 
 	case MAVLINK_MODE_CONFIG:

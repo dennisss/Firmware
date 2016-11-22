@@ -321,6 +321,10 @@ then
 	fi
 	unset AUTOCNF
 
+	# After all defaults are ready, load in our custom params
+	sh /etc/init.d/rc.tansa
+
+
 	set IO_PRESENT no
 
 	if [ $USE_IO == yes ]
@@ -623,8 +627,6 @@ then
 		fi
 	fi
 
-	# Start right after setting up fmu
-	iolink start
 
 	if [ $MAVLINK_F == default ]
 	then
@@ -1174,6 +1176,9 @@ then
 
 # End of autostart
 fi
+
+# Start after all other drivers to override pins
+iolink start
 
 # There is no further script processing, so we can free some RAM
 # XXX potentially unset all script variables.
