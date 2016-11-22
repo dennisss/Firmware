@@ -1,0 +1,23 @@
+param hold
+
+# Use inav
+param set SYS_MC_EST_GROUP 0
+
+# Ensuring that mocap is enabled in both estimators
+param set ATT_EXT_HDG_M 2
+param set INAV_DISAB_MOCAP 0
+
+# Don't use compass
+param set ATT_W_MAG 0.0
+
+# Battery calibration and scaling
+param set MC_BAT_SCALE_EN 1
+param set BAT_R_INTERNAL 0.016
+param set BAT_N_CELLS 3
+param set BAT_CAPACITY 2700
+param set BAT_V_EMPTY 3.4
+param set BAT_V_CHARGED 4.08
+
+param set CBRK_IO_SAFETY 22027
+
+param unhold

@@ -62,7 +62,7 @@
 #include <uORB/topics/parameter_update.h>
 
 // PE1 is TX/Out PE0 is RX/In
-#define GPIO_ACTIVE_IR (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTE|GPIO_PIN1)
+#define GPIO_ACTIVE_IR (GPIO_OUTPUT|GPIO_SPEED_2MHz|GPIO_PORTE|GPIO_PIN1)
 
 #define VEHICLE_CMD_USER_1 31010
 #define VEHICLE_CMD_BEACON VEHICLE_CMD_USER_1
@@ -108,6 +108,7 @@ int iolink_thread_main(int argc, char *argv[]) {
 
 	/* Configure gpio for active IR */
 	px4_arch_configgpio(GPIO_ACTIVE_IR);
+	px4_arch_gpiowrite(GPIO_ACTIVE_IR, true);
 
 	/* Set PWM range to 0% to 100% duty cycle for 50Hz */
 	struct pwm_output_values pwm_values;
@@ -177,10 +178,10 @@ int iolink_thread_main(int argc, char *argv[]) {
 					PX4_INFO("%d %d", val1, val2);
 
 					if(val1 > 2500) val1 = 2500;
-					else if(val1 < 2) val1 = 2;
+					//else if(val1 < 2) val1 = 2;
 
-					if(val2 > 2500) val2 = 20000;
-					else if(val2 < 2) val2 = 2;
+					if(val2 > 2500) val2 = 2500;
+					//else if(val2 < 2) val2 = 2;
 
 					//bool val3 = ((int)cmd.param3) != 0;
 
@@ -199,7 +200,7 @@ int iolink_thread_main(int argc, char *argv[]) {
 					//ioctl(priv->gpio_fd, GPIO_SET, priv->pin);
 
 				} else if (cmd.command == VEHICLE_CMD_BEACON) {
-					bool on = (int)cmd.param1? true : false;
+					bool on = (int)cmd.param1? false : true;
 					px4_arch_gpiowrite(GPIO_ACTIVE_IR, on);
 				}
 

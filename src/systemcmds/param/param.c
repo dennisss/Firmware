@@ -87,6 +87,8 @@ static int 	do_reset(const char *excludes[], int num_excludes);
 static int	do_reset_nostart(const char *excludes[], int num_excludes);
 static int	do_find(const char *name);
 
+static bool holding = false;
+
 int
 param_main(int argc, char *argv[])
 {
@@ -104,6 +106,16 @@ param_main(int argc, char *argv[])
 					return 0;
 				}
 			}
+		}
+
+		if (!strcmp(argv[1], "hold")) {
+			holding = true;
+			return 0;
+		}
+
+		if (!strcmp(argv[1], "unhold")) {
+			holding = false;
+			return 0;
 		}
 
 		if (!strcmp(argv[1], "load")) {
@@ -555,7 +567,7 @@ do_set(const char *name, const char *val, bool fail_on_not_found)
 		return 1;
 	}
 
-	if (param_save_default()) {
+	if (!holding && param_save_default()) {
 		warnx("Param export failed.");
 		return 1;
 
