@@ -70,6 +70,7 @@
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vision_position_estimate.h>
+#include <uORB/topics/att_pos_mocap.h>
 #include <uORB/topics/control_state.h>
 #include <uORB/topics/vehicle_global_position.h>
 #include <uORB/topics/wind_estimate.h>
@@ -408,6 +409,7 @@ void Ekf2::task_main()
 	int optical_flow_sub = orb_subscribe(ORB_ID(optical_flow));
 	int range_finder_sub = orb_subscribe(ORB_ID(distance_sensor));
 	int ev_pos_sub = orb_subscribe(ORB_ID(vision_position_estimate));
+	int mocap_sub = orb_subscribe(ORB_ID(att_pos_mocap));
 	int vehicle_land_detected_sub = orb_subscribe(ORB_ID(vehicle_land_detected));
 	int status_sub = orb_subscribe(ORB_ID(vehicle_status));
 
@@ -430,6 +432,7 @@ void Ekf2::task_main()
 	distance_sensor_s range_finder = {};
 	vehicle_land_detected_s vehicle_land_detected = {};
 	vision_position_estimate_s ev = {};
+	att_pos_mocap_s mocap = {};
 	vehicle_status_s vehicle_status = {};
 
 	while (!_task_should_exit) {
@@ -465,6 +468,7 @@ void Ekf2::task_main()
 		bool range_finder_updated = false;
 		bool vehicle_land_detected_updated = false;
 		bool vision_position_updated = false;
+		bool mocap_updated = false;
 		bool vehicle_status_updated = false;
 
 		orb_copy(ORB_ID(sensor_combined), sensors_sub, &sensors);
@@ -509,6 +513,12 @@ void Ekf2::task_main()
 
 		if (vision_position_updated) {
 			orb_copy(ORB_ID(vision_position_estimate), ev_pos_sub, &ev);
+		}
+
+		orb_check(mocap_sub, &mocap_updated);
+
+		if (mocap_updated) {
+			orb_copy(ORB_ID(att_pos_mocap), mocap_sub, &mocap);
 		}
 
 		// in replay mode we are getting the actual timestamp from the sensor topic
@@ -679,6 +689,27 @@ void Ekf2::task_main()
 
 			// use timestamp from external computer, clocks are synchronized when using MAVROS
 			_ekf.setExtVisionData(ev.timestamp, &ev_data);
+
+		}
+
+		if (mocap_updated) {
+
+			ext_vision_message ev_data;
+			ev_data.posNED(0) = mocap.x;
+			ev_data.posNED(1) = mocap.y;
+			ev_data.posNED(2) = mocap.z;
+			Quaternion q(mocap.q);
+			ev_data.quat = q;
+
+			// position measurement error
+			ev_data.posErr = _default_ev_pos_noise;
+
+			// angle measurement error
+			ev_data.angErr = _default_ev_ang_noise;
+
+			// use timestamp from external computer, clocks are synchronized when using MAVROS
+			_ekf.setExtVisionData(mocap.timestamp, &ev_data);
+
 		}
 
 		orb_check(vehicle_land_detected_sub, &vehicle_land_detected_updated);
