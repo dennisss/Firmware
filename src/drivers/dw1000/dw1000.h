@@ -171,12 +171,13 @@ public:
 
 
 	void setup_leds();
+	void test_leds();
 
 	void reset();
 
 	// TODO: We want to avoid copying, so buffer should be big enough to hold the index as well
-	int read_register(uint8_t reg, uint16_t sub, char *buffer, int length);
-	int write_register(uint8_t reg, uint16_t sub, const char *buffer, int length);
+	int read_register(uint8_t reg, uint16_t sub, void *buffer, int length);
+	int write_register(uint8_t reg, uint16_t sub, const void *buffer, int length);
 
 	void transmit(const char *buf, unsigned len, bool delay = false);
 

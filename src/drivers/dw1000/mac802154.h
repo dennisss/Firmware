@@ -31,13 +31,13 @@
  *
  ****************************************************************************/
 
-#pragma once;
+#pragma once
 
 #include <stdint.h>
 
 
 
-// Fields present in the
+// Fields present in the frame_control header
 #define MAC_TYPE 0b111
 	#define MAC_TYPE_BEACON 0b000
 	#define MAC_TYPE_DATA 0b001
@@ -51,7 +51,13 @@
 	#define MAC_DEST_ADDR_NONE (0 << 10)
 	#define MAC_DEST_ADDR_SHORT (0b10 << 10)
 	#define MAC_DEST_ADDR_LONG (0b11 << 10)
-
+#define MAC_VERSION (0b11 << 12)
+	#define MAC_VERSION_2003 (0b00 << 12)
+	#define MAC_VERSION_2011 (0b01 << 12)
+#define MAC_SRC_ADDR (0b11 << 14)
+	#define MAC_SRC_ADDR_NONE (0 << 14)
+	#define MAC_SRC_ADDR_SHORT (0b10 << 14)
+	#define MAC_SRC_ADDR_LONG (0b11 << 14)
 
 
 typedef struct {
@@ -65,6 +71,7 @@ typedef struct {
 	uint16_t src_pan;
 	uint64_t src_addr;
 
+	int size; // Size of the payload
 	char payload[127]; // 1027 for non-standard long DW frames
 
 } mac802154_message_t;

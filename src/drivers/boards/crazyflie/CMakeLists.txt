@@ -40,6 +40,7 @@ px4_add_module(
 		crazyflie_led.c
 		crazyflie_timer_config.c
 		crazyflie_i2c.cpp
+		crazyflie_spi.c
 	DEPENDS
 		platforms__common
 	)

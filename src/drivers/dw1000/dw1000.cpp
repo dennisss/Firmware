@@ -81,12 +81,11 @@ DW1000::init()
 	}
 
 
-	uint64_t t = 0;
-	read_register(DW1000_SYS_TIME, 0, &t, 5);
+	uint64_t t = get_system_time();
 	PX4_INFO("%llu", t);
 	usleep(10);
 
-	read_register(DW1000_SYS_TIME, 0, &t, 5);
+	t = get_system_time();
 	PX4_INFO("%llu", t);
 
 
@@ -94,30 +93,12 @@ DW1000::init()
 
 
 
-
-
-	//Hard setting GPIO0 to high
-
-	uint8_t val = 0;
-	write(DW1000_GPIO_CTRL, 0, &val, 1);
-
-	read(DW1000_GPIO_CTRL, &val, 1);
-	PX4_INFO("%02X", val);
-
-	val = 1 << 4; // mask
-	write(DW1000_GPIO_CTRL, 0x08, &val, 1);
-
-
-	val = 0xFF; //1 | (1 << 1);
-	write(DW1000_GPIO_CTRL, 0x0C, &val, 1);
-
-
 	setup_leds();
 
 
 	// trigger a test receive
 	uint32_t ctrl = 2; //1 << 8;
-	write(DW1000_SYS_CTRL, &ctrl, 4);
+	write_register(DW1000_SYS_CTRL, 0, &ctrl, 4);
 
 	return OK;
 }
@@ -143,6 +124,8 @@ DW1000::reset()
 inline unsigned
 dw1000_spi_header(unsigned dir, unsigned reg, unsigned sub, void *data)
 {
+	char *cmd = (char *) data;
+
 	reg = reg & 0x3F;
 	sub = sub & 0x7FFF;
 
@@ -158,31 +141,31 @@ dw1000_spi_header(unsigned dir, unsigned reg, unsigned sub, void *data)
 		cmd[1] = (n > 2? EXT_INDEX : 0) | (sub & 0x7F);
 	}
 
-	cmd[0] = (writing? DIR_WRITE : DIR_READ) | (n > 1? SUB_INDEX : 0) | reg;
+	cmd[0] = dir | (n > 1? SUB_INDEX : 0) | reg;
 
 	return n;
 }
 
 
-int DW1000::write_register(uint8_t reg, uint16_t sub, const char *buffer, int length)
+int DW1000::write_register(uint8_t reg, uint16_t sub, const void *buffer, int length)
 {
 	uint8_t cmd[128];//MPU_MAX_WRITE_BUFFER_SIZE];
 
-	if (sizeof(cmd) < (count + 2)) {
+	if (sizeof(cmd) < (length + 2)) {
 		return -EIO;
 	}
 
 	int n = dw1000_spi_header(DIR_WRITE, reg, sub, cmd);
-	memcpy(&cmd[n], data, count);
+	memcpy(&cmd[n], buffer, length);
 
 	set_frequency(20*1000*1000);
 
-	return transfer(cmd, cmd, count + n);
+	return transfer(cmd, cmd, length + n);
 }
 
 
 int
-DW1000::read_register(uint8_t reg, uint16_t sub, char *buffer, int length)
+DW1000::read_register(uint8_t reg, uint16_t sub, void *buffer, int length)
 {
 	uint8_t cmd[128];
 
@@ -190,10 +173,10 @@ DW1000::read_register(uint8_t reg, uint16_t sub, char *buffer, int length)
 
 	set_frequency(20*1000*1000);
 
-	int ret = transfer(cmd, cmd, count + n);
+	int ret = transfer(cmd, cmd, length + n);
 
 	if (ret == OK) {
-		memcpy(data, &cmd[n], count);
+		memcpy(buffer, &cmd[n], length);
 	}
 
 	return ret;
@@ -204,20 +187,16 @@ DW1000::probe()
 {
 	uint32_t whoami = 0;
 	uint32_t expected = DW1000_DEV_ID_RESPONSE;
-	int r = (read_register(DW1000_DEV_ID, 0, &whoami, 4) == OK && (whoami == expected)) ? 0 : -EIO;
-
-	PX4_INFO("%08X", whoami);
-
-	return r;
+	return (read_register(DW1000_DEV_ID, 0, &whoami, 4) == OK && (whoami == expected)) ? 0 : -EIO;
 }
 
 void
-DW1000::transmit(const char *buf, unsigned len, bool delay = false)
+DW1000::transmit(const char *buf, unsigned len, bool delay)
 {
 	uint32_t fc = 0;
 	write_register(DW1000_TX_FCTRL, 0, &fc, 4);
 
-	write_register(DW_1000_TX_BUFFER, 0, buf, len);
+	write_register(DW1000_TX_BUFFER, 0, buf, len);
 
 	uint32_t ctrl = DW1000_TXSTRT | (delay? DW1000_TXDLYS : 0);
 	write_register(DW1000_SYS_CTRL, 0, &ctrl, 4);
@@ -227,8 +206,8 @@ void
 DW1000::set_addr(uint16_t pan, uint16_t addr)
 {
 	uint32_t val;
-	memcpy(&val, addr, 2);
-	memcpy(((char *)&val) + 2. pan, 2);
+	memcpy(&val, &addr, 2);
+	memcpy(((char *)&val) + 2, &pan, 2);
 
 	write_register(DW1000_PANADR, 0, &val, 4);
 }
@@ -269,9 +248,29 @@ DW1000::setup_leds()
 	/* Configure GPIO0-3 to act as alternate I/O indicator LEDs */
 	uint32_t val = (1 << 6) | (1 << 8) | (1 << 10) | (1 << 12);
 	// Sub-register GPIO_MODE 0
-	write(DW1000_GPIO_CTRL, 0, &val, 4);
+	write_register(DW1000_GPIO_CTRL, 0, &val, 4);
 }
 
+
+void
+DW1000::test_leds()
+{
+	//Hard setting GPIO0 to high
+
+	uint8_t val = 0;
+	write_register(DW1000_GPIO_CTRL, 0, &val, 1);
+
+	read_register(DW1000_GPIO_CTRL, 0, &val, 1);
+	PX4_INFO("%02X", val);
+
+	val = 1 << 4; // mask
+	write_register(DW1000_GPIO_CTRL, 0x08, &val, 1);
+
+
+	val = 0xFF; //1 | (1 << 1);
+	write_register(DW1000_GPIO_CTRL, 0x0C, &val, 1);
+
+}
 
 
 /*

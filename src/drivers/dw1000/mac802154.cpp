@@ -31,14 +31,22 @@
  *
  ****************************************************************************/
 
+#include "mac802154.h"
+#include <string.h>
+
 int
 mac802154_message_pack(mac802154_message_t *msg, char *buf)
 {
+	unsigned idx = 0;
+
+	memcpy(buf + idx, &msg->frame_control, 2); idx += 2;
+	memcpy(buf + idx, &msg->seq_num, 1); idx++;
+
+	//memcpy(buf, )
 
 
+	return idx;
 }
-
-
 
 void
 mac802154_message_unpack(mac802154_message_t *msg, const char *buf, int len)
@@ -49,14 +57,10 @@ mac802154_message_unpack(mac802154_message_t *msg, const char *buf, int len)
 	memcpy(&msg->seq_num, buf + idx, 1); idx++;
 
 
-	// If the PAN ID compression bit is set to one and both the source and destination addresses are present, the frame shall contain only the Destination PAN Identifier field, and the Source PAN Identifier field shall be assumed equal to that of the destination
-
-	//  If the PAN ID compression bit is set to zero, then the PAN Identifier field shall be present if and only if the corresponding address is present
-
 	// Decode destination pan
-	//if ((msg->frame_control & MAC_DEST_ADDR) != MAC_DEST_ADDR_NONE && !(msg->frame_control & MAC_PAN_COMP)
-
-
+	if ((msg->frame_control & MAC_DEST_ADDR) != MAC_DEST_ADDR_NONE) {
+		memcpy(&msg->dst_pan, buf + idx, 2); idx += 2;
+	}
 
 	// Decode destination address
 	if ((msg->frame_control & MAC_DEST_ADDR) == MAC_DEST_ADDR_SHORT) {
@@ -66,10 +70,20 @@ mac802154_message_unpack(mac802154_message_t *msg, const char *buf, int len)
 		memcpy(&msg->dst_addr, buf + idx, 8); idx += 8;
 	}
 
+
 	// Decode source PAN
-	if ((msg->frame_control & MAC_SRC_ADDR) != MAC_SRC_ADDR_NONE) {
+	// If both addresses are present and the PAN compression is set, then the source pan is
+	bool compressed = (msg->frame_control & MAC_PAN_COMP) == MAC_PAN_COMP
+		&& (msg->frame_control & MAC_SRC_ADDR) != MAC_SRC_ADDR_NONE
+		&& (msg->frame_control & MAC_DEST_ADDR) == MAC_DEST_ADDR_NONE;
+
+	if (compressed) { // If compressed, then the source pan is assumed to be the same as the destination pan
+		msg->src_pan = msg->dst_pan;
+
+	} else if ((msg->frame_control & MAC_SRC_ADDR) != MAC_SRC_ADDR_NONE) {
 		memcpy(&msg->src_pan, buf + idx, 2); idx += 2;
 	}
+
 
 	// Decode source address
 	if ((msg->frame_control & MAC_SRC_ADDR) == MAC_SRC_ADDR_SHORT) {
@@ -79,8 +93,13 @@ mac802154_message_unpack(mac802154_message_t *msg, const char *buf, int len)
 		memcpy(&msg->src_addr, buf + idx, 8); idx += 8;
 	}
 
-	// Copy payload based on remaining length
+
+	// Assuming no Aux security header is present
 	// ...
 
+	// Copy payload based on remaining length
+	// Last two bytes are the FCS footer
+	msg->size = len - idx - 2;
+	memcpy(msg->payload, buf + idx, msg->size);
 
 }
