@@ -41,7 +41,10 @@ Bring RSTn pin positive to power on the device
 
 #include <drivers/device/spi.h>
 
-/* Register map */
+/*
+	Register map
+	(unused/unimplemented ones are commented out)
+*/
 #define DW1000_DEV_ID 0x00 // Device Identifier – includes device type and revision info
 #define DW1000_EUI 0x01 // Extended Unique Identifier
 #define DW1000_PANADR 0x03 // PAN Identifier and Short Address
@@ -73,16 +76,18 @@ Bring RSTn pin positive to power on the device
 
 #define DW1000_SYS_TIME 0x06 // System Time Counter (40-bit)
 #define DW1000_TX_FCTRL 0x08 // Transmit Frame Control
+#  define DW1000_TXLEN (0b1111111)
 #  define DW1000_TXBR_110K (0b00 << 13)
 #  define DW1000_TXBR_850K (0b01 << 13)
 #  define DW1000_TXBR_68M (0b10 << 13)
 #  define DW1000_TXPRF_4M (0b00 << 16)
 #  define DW1000_TXPRF_16M (0b01 << 16)
 #  define DW1000_TXPRF_64M (0b10 << 16)
-
+#  define DW1000_TXPSR_64 (0b0001 << 18) // Named based on resulting preamble lengths
+#  define DW1000_TXPSR_128 (0b0101 << 18)
 #define DW1000_TX_BUFFER 0x09 // Transmit Data Buffer
 #define DW1000_DX_TIME 0x0A // Delayed Send or Receive Time (40-bit)
-#define DW1000_RX_FWTO 0x0C // Receive Frame Wait Timeout Period
+//#define DW1000_RX_FWTO 0x0C // Receive Frame Wait Timeout Period
 #define DW1000_SYS_CTRL 0x0D // System Control Register
 #  define DW1000_SFCST  (1 << 0)
 #  define DW1000_TXSTRT  (1 << 1)
@@ -96,22 +101,34 @@ Bring RSTn pin positive to power on the device
 #define DW1000_SYS_MASK 0x0E // System Event Mask Register
 #define DW1000_SYS_STATUS 0x0F // System Event Status Register
 #define DW1000_RX_FINFO 0x10 // RX Frame Information (in double buffer set)
+# define DW1000_RXFLEN (0b1111111)
 #define DW1000_RX_BUFFER 0x11 // Receive Data (in double buffer set)
-#define DW1000_RX_FQUAL 0x12 // Rx Frame Quality information (in double buffer set)
-#define DW1000_RX_TTCKI 0x13 // Receiver Time Tracking Interval (in double buffer set)
-#define DW1000_RX_TTCKO 0x14 // Receiver Time Tracking Offset (in double buffer set)
-#define DW1000_RX_TIME 0x15 // Receive Message Time of Arrival (in double buffer set)
+//#define DW1000_RX_FQUAL 0x12 // Rx Frame Quality information (in double buffer set)
+//#define DW1000_RX_TTCKI 0x13 // Receiver Time Tracking Interval (in double buffer set)
+//#define DW1000_RX_TTCKO 0x14 // Receiver Time Tracking Offset (in double buffer set)
+#define DW1000_RX_TIME 0x15 // Receive Message Time of Arrival (in double buffer set) <- TODO: Read this
 #define DW1000_TX_TIME 0x17 // Transmit Message Time of Sending
 #define DW1000_TX_ANTD 0x18 // 16-bit Delay from Transmit to Antenna
-#define DW1000_SYS_STATE 0x19 // System State information
-#define DW1000_ACK_RESP_T 0x1A // Acknowledgement Time and Response Time
-#define DW1000_RX_SNIFF 0x1D // Pulsed Preamble Reception Configuration
+//#define DW1000_SYS_STATE 0x19 // System State information (Reserved)
+//#define DW1000_ACK_RESP_T 0x1A // Acknowledgement Time and Response Time
+//#define DW1000_RX_SNIFF 0x1D // Pulsed Preamble Reception Configuration
 #define DW1000_TX_POWER 0x1E // TX Power Control
 #define DW1000_CHAN_CTRL 0x1F // Channel Control
-#define DW1000_USR_SFD 0x21 // User-specified short/long TX/RX SFD sequences
+#  define DW1000_TX_CHAN(x) ((x) & 0b1111)
+#  define DW1000_RX_CHAN(x) (((x) & 0b1111) << 4)
+#  define DW1000_RXPRF_16M (0b01 << 18)
+#  define DW1000_RXPRF_64M (0b10 << 18)
+#  define DW1000_TX_PCODE(x) (((x) & 0b11111) << 22)
+#  define DW1000_RX_PCODE(x) (((x) & 0b11111) << 27)
+//#define DW1000_USR_SFD 0x21 // User-specified short/long TX/RX SFD sequences
 #define DW1000_AGC_CTRL 0x23 // Automatic Gain Control configuration
-#define DW1000_EXT_SYNC 0x24 // External synchronisation control.
-#define DW1000_ACC_MEM 0x25 // Read access to accumulator data
+#  define DW1000_AGC_CTRL1 0x02
+#  define DW1000_AGC_TUNE1 0x04
+#  define DW1000_AGC_TUNE2 0x0C
+#  define DW1000_AGC_TUNE3 0x12
+#  define DW1000_AGC_STAT1 0x1E
+//#define DW1000_EXT_SYNC 0x24 // External synchronisation control
+//#define DW1000_ACC_MEM 0x25 // Read access to accumulator data
 #define DW1000_GPIO_CTRL 0x26 // Peripheral register bus 1 access – GPIO control
 #  define DW1000_GPIO_MODE 0x00
 #  define DW1000_GPIO_DIR 0x08
@@ -133,12 +150,13 @@ Bring RSTn pin positive to power on the device
 #  define DW1000_DRX_TUNE4H 0x26
 #  define DW1000_RXPACC_NOSAT 0x2C
 #define DW1000_RF_CONF 0x28 // Analog RF Configuration
+#  define DW1000_RF_RXCTRLH 0x0B
+#  define DW1000_RF_TXCTRL 0x0C
 #define DW1000_TX_CAL 0x2A // Transmitter calibration block
 #define DW1000_FS_CTRL 0x2B // Frequency synthesiser control block
-#define DW1000_AON 0x2C // Always-On register set
-#define DW1000_OTP_IF 0x2D // One Time Programmable Memory Interface
+//#define DW1000_AON 0x2C // Always-On register set
+//#define DW1000_OTP_IF 0x2D // One Time Programmable Memory Interface
 #define DW1000_LDE_CTRL 0x2E // Leading edge detection control block
-#define DW1000_DIG_DIAG 0x2F // Digital Diagnostics Interface
 #define DW1000_PMSC 0x36 // Power Management System Control Block
 
 #define DW1000_DEV_ID_RESPONSE 0xDECA0130
@@ -180,7 +198,7 @@ public:
 	int write_register(uint8_t reg, uint16_t sub, const void *buffer, int length);
 
 	void transmit(const char *buf, unsigned len, bool delay = false);
-
+	int receive(char *buf); // For reading a received message
 
 	// Gets the 8byte long id used for long addressing of the module
 	uint64_t get_eui();
@@ -190,6 +208,13 @@ public:
 	void set_delayed_time(dw1000_time_t t);
 	dw1000_time_t get_receive_time();
 	dw1000_time_t get_transmit_time();
+
+	// the transmit delay
+	uint16_t get_antenna_delay();
+	void set_antenna_delay(uint16_t delay);
+
+
+	void set_power();
 
 protected:
 	virtual int probe();

@@ -106,6 +106,97 @@ DW1000::init()
 void
 DW1000::reset()
 {
+	int channel = 3; // between 1 and 7
+	int preamble; // preamble code
+	int prf; // Either 16Mhz or 64Mhz
+	// Also need to know preamble length
+
+	// System configuration
+	// TODO: Enable frame filtering
+
+
+	// Transmit power
+	uint32_t power = 0; // TODO: Look up recommended value
+	write_register(DW1000_TX_POWER, 0, &power, 4);
+
+	// Channel settings
+	uint32_t chan_ctrl = DW1000_TX_CHAN(channel) | DW1000_RX_CHAN(channel) | DW1000_RXPRF_64M
+						| DW1000_TX_PCODE(preamble) | DW1000_RX_PCODE(preamble);
+	write_register(DW1000_CHAN_CTRL, 0, &chan_ctrl, 4);
+
+
+	// AGC tuning
+	uint32_t tune;
+	if (prf == 16) tune = 0x8870;
+	if (prf == 64) tune = 0x889B;
+	write_register(DW1000_AGC_CTRL, DW1000_AGC_TUNE1, &tune, 2);
+
+	tune = 0x2502A907;
+	write_register(DW1000_AGC_CTRL, DW1000_AGC_TUNE2, &tune, 4);
+
+	tune = 0x0035;
+	write_register(DW1000_AGC_CTRL, DW1000_AGC_TUNE3, &tune, 4);
+
+
+	//
+	setup_leds();
+
+
+	// digitial receiver configuration
+	if (data_rate == 110) tune = 0x000A;
+	if (data_rate == 850) tune = 0x0001;
+	if (data_rate == 68) tune = 0x0001;
+	write_register(DW1000_DRX_CONF, DW1000_DRX_TUNE0b, &tune, 2);
+
+	if (prf == 16) tune = 0x0087;
+	if (prf == 64) tune = 0x008D;
+	write_register(DW1000_DRX_CONF, DW1000_DRX_TUNE1a, &tune, 2);
+
+	// TODO: There are a lot more of these
+
+
+	// Analog RF config
+	if (channel == 1 || channel == 2 || channel == 3 || channel == 5) tune = 0xD8;
+	if (channel == 4 || channel == 7) tune = 0xBC;
+	write_register(DW1000_RF_CONF, DW1000_RF_RXCTRLH, &tune, 1);
+
+	if (channel == 1) tune = 0x00005C40;
+	if (channel == 2) tune = 0x00045CA0;
+	if (channel == 3) tune = 0x00086CC0;
+	if (channel == 4) tune = 0x00045C80;
+	if (channel == 5) tune = 0x001E3FE0;
+	if (channel == 7) tune = 0x001E7DE0;
+	write_register(DW1000_RF_CONF, DW1000_RF_TXCTRL, &tune, 4);
+
+
+	// Transmitter calibration block
+
+	//write_register(DW1000_TX_CAL, DW1000_TC_PGDELAY, &tune, 4);
+
+
+
+}
+
+uint16_t
+DW1000::get_antenna_delay()
+{
+	uint16_t val;
+	read_register(DW1000_TX_ANTD, 0, &val, 2);
+	return val;
+}
+
+void
+DW1000::set_antenna_delay(uint16_t delay)
+{
+	write_register(DW1000_TX_ANTD, 0, &val, 2);
+}
+
+
+void
+DW1000::set_power()
+{
+	// Based on PRF, Smart power control enabled, and channel
+	// See tables on page 110 of user manual
 
 
 }
@@ -193,13 +284,27 @@ DW1000::probe()
 void
 DW1000::transmit(const char *buf, unsigned len, bool delay)
 {
-	uint32_t fc = 0;
+	uint32_t fc = (DW1000_TXLEN & len) | DW1000_TXBR_68M | DW1000_TXPRF_64M | DW1000_TXPSR_64;
 	write_register(DW1000_TX_FCTRL, 0, &fc, 4);
 
 	write_register(DW1000_TX_BUFFER, 0, buf, len);
 
 	uint32_t ctrl = DW1000_TXSTRT | (delay? DW1000_TXDLYS : 0);
 	write_register(DW1000_SYS_CTRL, 0, &ctrl, 4);
+}
+
+int
+DW1000::receive(char *buf)
+{
+	uint32_t info;
+	read_register(DW1000_RX_FINFO, 0, &info, 4);
+
+	unsigned length = info & DW1000_RXFLEN;
+
+	// TODO: Read 2 fewer bytes as the FCS checksum is at the end
+	read_register(DW1000_RX_BUFFER, 0, buf, length);
+
+	return length;
 }
 
 void
@@ -271,9 +376,3 @@ DW1000::test_leds()
 	write_register(DW1000_GPIO_CTRL, 0x0C, &val, 1);
 
 }
-
-
-/*
-In order to transmit, the host controller must write data for transmission to Register file: 0x09 – Transmit Data Buffer. The desired selections for preamble length, data rate and PRF must also be written to Register file: 0x08 – Transmit Frame Control. Transmitter configuration is carried out in the IDLE state, but frame configurations may be carried out during active transmit as described in section 3.5 – High Speed Transmission. Assuming all other relevant configurations have already been made, the host controller initiates the transmission by setting the TXSTRT control bit in Register file: 0x0D – System Control Register. After transmission has been requested, the DW1000 automatically sends the complete frame; preamble, SFD, PHR and data. The FCS (CRC) is automatically appended to the message as an aid to the MAC layer framing.
-
-*/
