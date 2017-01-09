@@ -52,8 +52,8 @@ typedef unsigned char bool_t;
 #endif
 
 
-#define	   I2C                0x01
-#define	   SPI                0x00
+//#define	   I2C                0x01
+//#define	   SPI                0x00
 
 #define    COMMS_BUFFER_SIZE    64  // MUST be the same size as the SV task buffer
 
@@ -401,4 +401,3 @@ int32_t VL53L0X_get_timer_value(int32_t *ptimer_count);
 #endif
 
 #endif //_VL53L0X_I2C_PLATFORM_H_
-

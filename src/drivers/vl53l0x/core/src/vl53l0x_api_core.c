@@ -1,5 +1,5 @@
 /*******************************************************************************
- Copyright © 2016, STMicroelectronics International N.V.
+ Copyright ï¿½ 2016, STMicroelectronics International N.V.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,23 @@
 	_LOG_FUNCTION_END(TRACE_MODULE_API, status, ##__VA_ARGS__)
 #define LOG_FUNCTION_END_FMT(status, fmt, ...) \
 	_LOG_FUNCTION_END_FMT(TRACE_MODULE_API, status, fmt, ##__VA_ARGS__)
+
+
+VL53L0X_Error VL53L0X_device_read_strobe(VL53L0X_DEV Dev);
+uint32_t VL53L0X_calc_macro_period_ps(VL53L0X_DEV Dev, uint8_t vcsel_period_pclks);
+uint32_t VL53L0X_calc_timeout_us(VL53L0X_DEV Dev,
+		uint16_t timeout_period_mclks,
+		uint8_t vcsel_period_pclks);
+VL53L0X_Error VL53L0X_calc_dmax(
+	VL53L0X_DEV Dev,
+	FixPoint1616_t totalSignalRate_mcps,
+	FixPoint1616_t totalCorrSignalRate_mcps,
+	FixPoint1616_t pwMult,
+	uint32_t sigmaEstimateP1,
+	FixPoint1616_t sigmaEstimateP2,
+	uint32_t peakVcselDuration_us,
+	uint32_t *pdmax_mm);
+	
 
 VL53L0X_Error VL53L0X_reverse_bytes(uint8_t *data, uint32_t size)
 {

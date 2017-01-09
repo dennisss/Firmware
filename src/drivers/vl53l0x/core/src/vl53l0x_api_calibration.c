@@ -1,5 +1,5 @@
 /*******************************************************************************
- Copyright © 2016, STMicroelectronics International N.V.
+ Copyright ï¿½ 2016, STMicroelectronics International N.V.
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,12 @@
 
 uint32_t refArrayQuadrants[4] = {REF_ARRAY_SPAD_10, REF_ARRAY_SPAD_5,
 		REF_ARRAY_SPAD_0, REF_ARRAY_SPAD_5 };
+
+
+void get_next_good_spad(uint8_t goodSpadArray[], uint32_t size, uint32_t curr, int32_t *next);
+uint8_t is_aperture(uint32_t spadIndex);
+VL53L0X_Error enable_spad_bit(uint8_t spadArray[], uint32_t size,
+	uint32_t spadIndex);
 
 VL53L0X_Error VL53L0X_perform_xtalk_calibration(VL53L0X_DEV Dev,
 			FixPoint1616_t XTalkCalDistance,
