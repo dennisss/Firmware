@@ -61,11 +61,18 @@
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/parameter_update.h>
 
-// PE1 is TX/Out PE0 is RX/In
-#define GPIO_ACTIVE_IR (GPIO_OUTPUT|GPIO_SPEED_2MHz|GPIO_PORTE|GPIO_PIN1)
+// PE1 is TX/Out, PE0 is RX/In
+#define GPIO_ACTIVE_IR (GPIO_OUTPUT|GPIO_SPEED_2MHz|GPIO_PORTE|GPIO_PIN0)
+
+// We use FrSky UART on Pixracer for the Pixie
+#define PIXIE_DEVICE_PATH "/dev/ttyS6"
+#define PIXIE_CHAIN_LEN 2
 
 #define VEHICLE_CMD_USER_1 31010
 #define VEHICLE_CMD_BEACON VEHICLE_CMD_USER_1
+
+#define VEHICLE_CMD_USER_2 31011
+#define VEHICLE_CMD_RGBLED VEHICLE_CMD_USER_2
 
 static int _iolink_task;
 
@@ -73,6 +80,28 @@ static int _iolink_task;
 __EXPORT int iolink_main(int argc, char *argv[]);
 
 int iolink_thread_main(int argc, char *argv[]);
+
+void pixie_write(int fd, int rgb);
+
+
+
+void pixie_write(int fd, int rgb) {
+
+	char r = rgb;
+	char g = rgb >> 8;
+	char b = rgb >> 16;
+
+	char buf[PIXIE_CHAIN_LEN*3];
+	for(int i = 0; i < PIXIE_CHAIN_LEN; i++) {
+		buf[i*3] = r;
+		buf[i*3 + 1] = g;
+		buf[i*3 + 2] = b;
+	}
+
+	write(fd, buf, sizeof(buf));
+
+}
+
 
 int iolink_main(int argc, char *argv[])
 {
@@ -95,20 +124,31 @@ int iolink_main(int argc, char *argv[])
 }
 
 
+
+
+
 int iolink_thread_main(int argc, char *argv[]) {
 	int ret;
 	const char *dev = PWM_OUTPUT0_DEVICE_PATH;
 
 
 	/* Open PWM driver */
-	int fd = open(dev, 0);
-	if (fd < 0) {
+	int pwm_fd = open(dev, 0);
+	if (pwm_fd < 0) {
 		err(1, "can't open %s", dev);
+	}
+
+
+	int pixie_fd = open(PIXIE_DEVICE_PATH, O_WRONLY);
+	int pixie_color = 0; // Default color is off
+	if (pixie_fd < 0) {
+		err(1, "can't open %s", PIXIE_DEVICE_PATH);
 	}
 
 	/* Configure gpio for active IR */
 	px4_arch_configgpio(GPIO_ACTIVE_IR);
 	px4_arch_gpiowrite(GPIO_ACTIVE_IR, true);
+
 
 	/* Set PWM range to 0% to 100% duty cycle for 50Hz */
 	struct pwm_output_values pwm_values;
@@ -116,14 +156,14 @@ int iolink_thread_main(int argc, char *argv[]) {
 	pwm_values.channel_count = 6; // servo_count;
 	pwm_values.values[4] = 2;
 	pwm_values.values[5] = 2;
-	ret = ioctl(fd, PWM_SERVO_SET_MIN_PWM, (long unsigned int)&pwm_values);
+	ret = ioctl(pwm_fd, PWM_SERVO_SET_MIN_PWM, (long unsigned int)&pwm_values);
 	if (ret != OK) {
 		errx(ret, "failed setting min values");
 	}
 
 	pwm_values.values[4] = 2500;
 	pwm_values.values[5] = 2500;
-	ret = ioctl(fd, PWM_SERVO_SET_MAX_PWM, (long unsigned int)&pwm_values);
+	ret = ioctl(pwm_fd, PWM_SERVO_SET_MAX_PWM, (long unsigned int)&pwm_values);
 	if (ret != OK) {
 		errx(ret, "failed setting max values");
 	}
@@ -143,12 +183,15 @@ int iolink_thread_main(int argc, char *argv[]) {
 
 	while (true) {
 		/* wait for sensor update of 1 file descriptor for 1000 ms (1 second) */
-		int poll_ret = px4_poll(fds, 1, 1000);
+		int poll_ret = px4_poll(fds, 1, 500);
 
 		/* handle the poll result */
 		if (poll_ret == 0) {
 			/* this means none of our providers is giving us data */
 			//PX4_ERR("[px4_simple_app] Got no data within a second");
+
+			// Ensure that the LEDs don't time out
+			pixie_write(pixie_fd, pixie_color);
 
 		} else if (poll_ret < 0) {
 			/* this is seriously bad - should be an emergency */
@@ -185,12 +228,12 @@ int iolink_thread_main(int argc, char *argv[]) {
 
 					//bool val3 = ((int)cmd.param3) != 0;
 
-					ret = ioctl(fd, PWM_SERVO_SET(4), val1);
+					ret = ioctl(pwm_fd, PWM_SERVO_SET(4), val1);
 					if (ret != OK) {
 						err(1, "PWM_SERVO_SET(%d)", 4);
 					}
 
-					ret = ioctl(fd, PWM_SERVO_SET(5), val2);
+					ret = ioctl(pwm_fd, PWM_SERVO_SET(5), val2);
 					if (ret != OK) {
 						err(1, "PWM_SERVO_SET(%d)", 5);
 					}
@@ -202,6 +245,10 @@ int iolink_thread_main(int argc, char *argv[]) {
 				} else if (cmd.command == VEHICLE_CMD_BEACON) {
 					bool on = (int)cmd.param1? false : true;
 					px4_arch_gpiowrite(GPIO_ACTIVE_IR, on);
+
+				} else if (cmd.command == VEHICLE_CMD_RGBLED) {
+					pixie_color = (int) cmd.param1;
+					pixie_write(pixie_fd, pixie_color);
 				}
 
 			}
