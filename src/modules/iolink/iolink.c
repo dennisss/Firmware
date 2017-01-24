@@ -41,7 +41,9 @@
 #include <px4_config.h>
 #include <px4_tasks.h>
 #include <px4_posix.h>
+#include <px4_defines.h>
 
+#include <termios.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <poll.h>
@@ -64,8 +66,11 @@
 // PE1 is TX/Out, PE0 is RX/In
 #define GPIO_ACTIVE_IR (GPIO_OUTPUT|GPIO_SPEED_2MHz|GPIO_PORTE|GPIO_PIN0)
 
+// Pixie on GPS port
+#define PIXIE_DEVICE_PATH "/dev/ttyS3"
+
 // We use FrSky UART on Pixracer for the Pixie
-#define PIXIE_DEVICE_PATH "/dev/ttyS6"
+//"/dev/ttyS6"
 #define PIXIE_CHAIN_LEN 2
 
 #define VEHICLE_CMD_USER_1 31010
@@ -83,6 +88,8 @@ int iolink_thread_main(int argc, char *argv[]);
 
 void pixie_write(int fd, int rgb);
 
+int
+open_serial(const char *dev);
 
 
 void pixie_write(int fd, int rgb) {
@@ -125,6 +132,48 @@ int iolink_main(int argc, char *argv[])
 
 
 
+int
+open_serial(const char *dev)
+{
+
+	int rate = B115200;
+
+	// open uart
+	int fd = px4_open(dev, O_RDWR | O_NOCTTY);
+	int termios_state = -1;
+
+	if (fd < 0) {
+		PX4_ERR("failed to open uart device!");
+		return -1;
+	}
+
+	// set baud rate
+	struct termios config;
+	tcgetattr(fd, &config);
+
+	// clear ONLCR flag (which appends a CR for every LF)
+	config.c_oflag &= ~ONLCR;
+
+	// Disable hardware flow control
+	config.c_cflag &= ~CRTSCTS;
+
+
+	/* Set baud rate */
+	if (cfsetispeed(&config, rate) < 0 || cfsetospeed(&config, rate) < 0) {
+		warnx("ERR SET BAUD %s: %d\n", dev, termios_state);
+		px4_close(fd);
+		return -1;
+	}
+
+	if ((termios_state = tcsetattr(fd, TCSANOW, &config)) < 0) {
+		PX4_WARN("ERR SET CONF %s\n", dev);
+		px4_close(fd);
+		return -1;
+	}
+
+	return fd;
+}
+
 
 
 int iolink_thread_main(int argc, char *argv[]) {
@@ -139,7 +188,7 @@ int iolink_thread_main(int argc, char *argv[]) {
 	}
 
 
-	int pixie_fd = open(PIXIE_DEVICE_PATH, O_WRONLY);
+	int pixie_fd = open_serial(PIXIE_DEVICE_PATH);
 	int pixie_color = 0; // Default color is off
 	if (pixie_fd < 0) {
 		err(1, "can't open %s", PIXIE_DEVICE_PATH);
