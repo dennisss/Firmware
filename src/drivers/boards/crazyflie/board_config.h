@@ -190,6 +190,36 @@
 /* Crazyflie only has one external bus */
 #define PX4_SPI_BUS_EXT 1
 
+#ifdef CF2_BIGQUAD
+
+/* PWM
+*
+*
+* Pins:
+*
+* CH1: TX2    PA2   TIM2_CH3
+* CH2: IO_2  PB5  TIM3_CH2
+* CH3: RX2   PA3 TIM2_CH4
+* CH4: IO_3  PB4 TIM3_CH1
+*/
+
+#define GPIO_TIM2_CH3OUT	GPIO_TIM2_CH3OUT_1
+#define GPIO_TIM3_CH2OUT	GPIO_TIM3_CH2OUT_2
+#define GPIO_TIM2_CH4OUT	GPIO_TIM2_CH4OUT_1
+#define GPIO_TIM3_CH1OUT	GPIO_TIM3_CH1OUT_2
+#define DIRECT_PWM_OUTPUT_CHANNELS	4
+
+#define GPIO_TIM2_CH3IN		GPIO_TIM2_CH3IN_1
+#define GPIO_TIM3_CH2IN		GPIO_TIM3_CH2IN_2
+#define GPIO_TIM2_CH4IN		GPIO_TIM2_CH4IN_1
+#define GPIO_TIM3_CH1IN		GPIO_TIM3_CH1IN_2
+
+/*
+* No alternative rates as we are using regular brushless motors
+*/
+
+
+#else
 
 /* PWM
 *
@@ -234,6 +264,8 @@
 #define PWM_DEFAULT_MAX 255
 #define PWM_LOWEST_MAX 255
 #define PWM_DEFAULT_TRIM 1500
+
+#endif
 
 
 /* High-resolution timer */
