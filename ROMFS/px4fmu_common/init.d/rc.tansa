@@ -1,7 +1,23 @@
+#
+# These are settings common to all tansa vehicles
+#
+
 param hold
 
-# Use inav
-param set SYS_MC_EST_GROUP 0
+
+# 1 for ATTQ/LPE, 2 for EKF
+param set SYS_MC_EST_GROUP 2
+
+
+# Don't use the magnetometer for anything
+param set EKF2_MAG_TYPE 3
+
+# Just fuse external vision position
+# 8 + 16 = 24
+param set EKF2_AID_MASK 24
+
+params set EKF2_EVP_NOISE 0.001
+
 
 # Ensuring that mocap is enabled in both estimators
 param set ATT_EXT_HDG_M 2
@@ -9,14 +25,6 @@ param set INAV_DISAB_MOCAP 0
 
 # Don't use compass
 param set ATT_W_MAG 0.0
-
-# Battery calibration and scaling
-param set MC_BAT_SCALE_EN 1
-param set BAT_R_INTERNAL 0.016
-param set BAT_N_CELLS 3
-param set BAT_CAPACITY 2700
-param set BAT_V_EMPTY 3.4
-param set BAT_V_CHARGED 4.08
 
 param set CBRK_IO_SAFETY 22027
 
@@ -29,5 +37,20 @@ param set COM_OF_LOSS_T 0.25
 
 # With RC, do the same
 param set COM_OBL_RC_ACT 4
+
+param set PWM_MIN 1000
+param set PWM_MAX 2000
+
+param set COM_RC_IN_MODE 0
+
+param set RC_MAP_PITCH 3
+param set RC_MAP_ROLL 2
+param set RC_MAP_THROTTLE 1
+param set RC_MAP_YAW 4
+
+param set RC_MAP_FLTMODE 5
+param set RC_MAP_KILL_SW 7
+
+# TODO: Also hardcode flight modes?
 
 param unhold
