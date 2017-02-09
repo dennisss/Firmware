@@ -989,7 +989,7 @@ function(px4_create_git_hash_header)
 	add_custom_command(
 		OUTPUT ${px4_git_ver_header}
 		COMMAND ${PYTHON_EXECUTABLE} ${PX4_SOURCE_DIR}/Tools/px_update_git_header.py ${px4_git_ver_header} > ${PX4_BINARY_DIR}/git_header.log
-		DEPENDS ${PX4_SOURCE_DIR}/Tools/px_update_git_header.py ${PX4_SOURCE_DIR}/.git/index ${PX4_SOURCE_DIR}/.git/HEAD
+		DEPENDS ${PX4_SOURCE_DIR}/Tools/px_update_git_header.py #${PX4_SOURCE_DIR}/.git/index ${PX4_SOURCE_DIR}/.git/HEAD
 		WORKING_DIRECTORY ${PX4_SOURCE_DIR}
 		COMMENT "Generating git hash header"
 		)

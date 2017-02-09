@@ -406,7 +406,7 @@ then
 		unset HIL
 	else
 		unset HIL
-		gps start
+		#gps start
 	fi
 
 	# waypoint storage
@@ -745,10 +745,10 @@ then
 		fi
 	fi
 
-	if ver hwcmp PX4FMU_V4
-	then
-		frsky_telemetry start -d /dev/ttyS6
-	fi
+	#if ver hwcmp PX4FMU_V4
+	#then
+	#	frsky_telemetry start -d /dev/ttyS6
+	#fi
 
 	if ver hwcmp MINDPX_V2
 	then
