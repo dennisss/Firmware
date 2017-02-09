@@ -16,7 +16,7 @@ param set EKF2_MAG_TYPE 3
 # 8 + 16 = 24
 param set EKF2_AID_MASK 24
 
-params set EKF2_EVP_NOISE 0.001
+param set EKF2_EVP_NOISE 0.001
 
 
 # Ensuring that mocap is enabled in both estimators

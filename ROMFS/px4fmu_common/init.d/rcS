@@ -429,7 +429,7 @@ then
 			set FMU_MODE serial
 		fi
 	else
-		gps start
+		#gps start
 	fi
 
 	set DATAMAN_OPT ""
@@ -809,10 +809,10 @@ then
 		fi
 	fi
 
-	if ver hwcmp PX4FMU_V4
-	then
-		frsky_telemetry start -d /dev/ttyS6
-	fi
+	#if ver hwcmp PX4FMU_V4
+	#then
+	#	frsky_telemetry start -d /dev/ttyS6
+	#fi
 
 	if ver hwcmp MINDPX_V2
 	then

@@ -66,8 +66,10 @@
 // PE1 is TX/Out, PE0 is RX/In
 #define GPIO_ACTIVE_IR (GPIO_OUTPUT|GPIO_SPEED_2MHz|GPIO_PORTE|GPIO_PIN0)
 
-// Pixie on GPS port
-#define PIXIE_DEVICE_PATH "/dev/ttyS3"
+#define FRSKY_INVERTER_CLR (GPIO_OUTPUT|GPIO_PORTA|GPIO_PIN10|GPIO_PUSHPULL|GPIO_OUTPUT_CLEAR)
+
+// Use S3 for GPS port, S6 for FrSky port
+#define PIXIE_DEVICE_PATH "/dev/ttyS6"
 
 // We use FrSky UART on Pixracer for the Pixie
 //"/dev/ttyS6"
@@ -139,7 +141,7 @@ open_serial(const char *dev)
 	int rate = B115200;
 
 	// open uart
-	int fd = px4_open(dev, O_RDWR | O_NOCTTY);
+	int fd = px4_open(dev, O_WRONLY | O_NOCTTY);
 	int termios_state = -1;
 
 	if (fd < 0) {
@@ -194,9 +196,11 @@ int iolink_thread_main(int argc, char *argv[]) {
 		err(1, "can't open %s", PIXIE_DEVICE_PATH);
 	}
 
+	px4_arch_configgpio(FRSKY_INVERTER_CLR);
+
 	/* Configure gpio for active IR */
 	px4_arch_configgpio(GPIO_ACTIVE_IR);
-	px4_arch_gpiowrite(GPIO_ACTIVE_IR, true);
+	px4_arch_gpiowrite(GPIO_ACTIVE_IR, false);
 
 
 	/* Set PWM range to 0% to 100% duty cycle for 50Hz */
@@ -292,7 +296,7 @@ int iolink_thread_main(int argc, char *argv[]) {
 					//ioctl(priv->gpio_fd, GPIO_SET, priv->pin);
 
 				} else if (cmd.command == VEHICLE_CMD_BEACON) {
-					bool on = (int)cmd.param1? false : true;
+					bool on = (int)cmd.param1? true : false;
 					px4_arch_gpiowrite(GPIO_ACTIVE_IR, on);
 
 				} else if (cmd.command == VEHICLE_CMD_RGBLED) {

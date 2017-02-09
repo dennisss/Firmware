@@ -1049,7 +1049,7 @@ function(px4_generate_parameters_xml)
 	if (NOT OVERRIDES)
 		set(OVERRIDES "{}")
 	endif()
-	
+
 	# get full path for each module
 	set(module_list)
 	if(DISABLE_PARAMS_MODULE_SCOPING)
@@ -1324,7 +1324,7 @@ function(px4_find_python_module module)
 			"import re, ${module}; print(re.compile('/__init__.py.*').sub('',${module}.__file__))"
 			RESULT_VARIABLE _${module}_status
 			OUTPUT_VARIABLE _${module}_location
-			ERROR_QUIET 
+			ERROR_QUIET
 			OUTPUT_STRIP_TRAILING_WHITESPACE)
 		if(NOT _${module}_status)
 			set(PY_${module_upper} ${_${module}_location} CACHE STRING
