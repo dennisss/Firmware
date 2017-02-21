@@ -64,12 +64,12 @@
 #include <uORB/topics/parameter_update.h>
 
 // PE1 is TX/Out, PE0 is RX/In
-#define GPIO_ACTIVE_IR (GPIO_OUTPUT|GPIO_SPEED_2MHz|GPIO_PORTE|GPIO_PIN0)
+#define GPIO_ACTIVE_IR (GPIO_OUTPUT|GPIO_SPEED_2MHz|GPIO_PORTE|GPIO_PIN1)
 
 #define FRSKY_INVERTER_CLR (GPIO_OUTPUT|GPIO_PORTA|GPIO_PIN10|GPIO_PUSHPULL|GPIO_OUTPUT_CLEAR)
 
 // Use S3 for GPS port, S6 for FrSky port
-#define PIXIE_DEVICE_PATH "/dev/ttyS6"
+#define PIXIE_DEVICE_PATH "/dev/ttyS3"
 
 // We use FrSky UART on Pixracer for the Pixie
 //"/dev/ttyS6"
@@ -244,7 +244,9 @@ int iolink_thread_main(int argc, char *argv[]) {
 			//PX4_ERR("[px4_simple_app] Got no data within a second");
 
 			// Ensure that the LEDs don't time out
-			pixie_write(pixie_fd, pixie_color);
+			if (pixie_color != 0) {
+				pixie_write(pixie_fd, pixie_color);
+			}
 
 		} else if (poll_ret < 0) {
 			/* this is seriously bad - should be an emergency */
