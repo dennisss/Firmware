@@ -32,4 +32,6 @@ then
 	param set MC_ROLLRATE_I 0.025
 	param set MC_ROLLRATE_D 0.004
 
+	param set THR_MDL_FAC 0.65
+
 fi

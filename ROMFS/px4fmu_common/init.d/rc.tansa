@@ -51,6 +51,8 @@ param set COM_RC_IN_MODE 0
 #param set RC_MAP_FLTMODE 5
 #param set RC_MAP_KILL_SW 7
 
+param set RC_KILLSWITCH_TH 0.6
+
 # TODO: Also hardcode flight modes?
 
 param unhold
