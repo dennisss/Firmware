@@ -6,7 +6,7 @@ param hold
 
 
 # 1 for ATTQ/LPE, 2 for EKF
-param set SYS_MC_EST_GROUP 1
+param set SYS_MC_EST_GROUP 2
 
 
 # Don't use the magnetometer for anything
@@ -14,7 +14,9 @@ param set SYS_MC_EST_GROUP 1
 
 # Just fuse external vision position
 # 8 + 16 = 24
-#param set EKF2_AID_MASK 24
+param set EKF2_AID_MASK 24
+
+param set EKF2_HGT_MODE 0
 
 param set EKF2_EVP_NOISE 0.001
 
