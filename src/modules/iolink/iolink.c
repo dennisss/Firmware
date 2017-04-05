@@ -52,6 +52,7 @@
 #include <nuttx/fs/ioctl.h>
 
 #include "drivers/drv_pwm_output.h"
+#include "drivers/drv_board_led.h"
 //#include <drivers/drv_gpio.h>
 
 
@@ -189,6 +190,10 @@ int iolink_thread_main(int argc, char *argv[]) {
 		err(1, "can't open %s", dev);
 	}
 
+	int led_fd = open(LED0_DEVICE_PATH, 0);
+	if(led_fd < 0) {
+		err(1, "can't open %s", LED0_DEVICE_PATH);
+	}
 
 	int pixie_fd = open_serial(PIXIE_DEVICE_PATH);
 	int pixie_color = 0; // Default color is off
@@ -304,6 +309,14 @@ int iolink_thread_main(int argc, char *argv[]) {
 				} else if (cmd.command == VEHICLE_CMD_RGBLED) {
 					pixie_color = (int) cmd.param1;
 					pixie_write(pixie_fd, pixie_color);
+
+
+					// Setting onboard color
+					int c = (int) cmd.param2;
+					ioctl(led_fd, (c & 0xff)? LED_ON : LED_OFF, LED_BLUE | LED_OVERRIDE);
+					ioctl(led_fd, (c & 0xff00)? LED_ON : LED_OFF, LED_GREEN | LED_OVERRIDE);
+					ioctl(led_fd, (c & 0xff0000)? LED_ON : LED_OFF, LED_RED | LED_OVERRIDE);
+
 				}
 
 			}
