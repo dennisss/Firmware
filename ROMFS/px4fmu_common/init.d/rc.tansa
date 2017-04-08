@@ -16,7 +16,7 @@ param set SYS_MC_EST_GROUP 2
 # 8 + 16 = 24
 param set EKF2_AID_MASK 24
 
-param set EKF2_HGT_MODE 0
+param set EKF2_HGT_MODE 3
 
 param set EKF2_EVP_NOISE 0.001
 
@@ -51,7 +51,7 @@ param set COM_RC_IN_MODE 0
 #param set RC_MAP_YAW 4
 
 #param set RC_MAP_FLTMODE 5
-#param set RC_MAP_KILL_SW 7
+param set RC_MAP_KILL_SW 7
 
 param set RC_KILLSWITCH_TH 0.6
 

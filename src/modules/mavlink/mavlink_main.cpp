@@ -2066,7 +2066,9 @@ Mavlink::task_main(int argc, char *argv[])
 		//stream nothing not vital to monitoring system health
 		configure_stream("SYS_STATUS", 0.5f);
 		configure_stream("ATTITUDE_QUATERNION", 2.0f);
-		configure_stream("HIGHRES_IMU", 2.0f);
+		configure_stream("HIGHRES_IMU", 1.0f);
+		configure_stream("LOCAL_POSITION_NED", 1.0f);
+		configure_stream("RC_CHANNELS", 1.0f);
 		break;
 
 	case MAVLINK_MODE_CONFIG:

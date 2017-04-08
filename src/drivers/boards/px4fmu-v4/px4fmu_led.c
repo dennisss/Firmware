@@ -91,6 +91,8 @@ static void phy_set_led(int led, bool state)
 		locked = 1;
 	}
 
+	led = led & (~LED_OVERRIDE);
+
 	if(locked && !override) {
 		return;
 	}
@@ -101,7 +103,8 @@ static void phy_set_led(int led, bool state)
 
 static bool phy_get_led(int led)
 {
-	return !stm32_gpioread(g_ledmap[led] & (~LED_OVERRIDE));
+	led = led & (~LED_OVERRIDE);
+	return !stm32_gpioread(g_ledmap[led]);
 }
 
 __EXPORT void led_on(int led)

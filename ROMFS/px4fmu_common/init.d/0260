@@ -34,4 +34,11 @@ then
 
 	param set THR_MDL_FAC 0.65
 
+
 fi
+
+param set MPC_THR_HOVER 0.21
+
+# EKF2 doesn't do a good job of estimating if we are going up or down by itself so we just force the landing routing to use 15% of the throttle
+param set MPC_THR_MIN 0.14
+param set MPC_THR_MAX 0.15
