@@ -69,8 +69,8 @@
 
 #define FRSKY_INVERTER_CLR (GPIO_OUTPUT|GPIO_PORTA|GPIO_PIN10|GPIO_PUSHPULL|GPIO_OUTPUT_CLEAR)
 
-// Use S3 for GPS port, S6 for FrSky port
-#define PIXIE_DEVICE_PATH "/dev/ttyS3"
+// S1 for TELEM1, Use S3 for GPS port, S6 for FrSky port
+#define PIXIE_DEVICE_PATH "/dev/ttyS1"
 
 // We use FrSky UART on Pixracer for the Pixie
 //"/dev/ttyS6"
@@ -89,20 +89,20 @@ __EXPORT int iolink_main(int argc, char *argv[]);
 
 int iolink_thread_main(int argc, char *argv[]);
 
-void pixie_write(int fd, int rgb);
+void pixie_write(int fd, int *rgb);
 
 int
 open_serial(const char *dev);
 
 
-void pixie_write(int fd, int rgb) {
-
-	char r = rgb;
-	char g = rgb >> 8;
-	char b = rgb >> 16;
+void pixie_write(int fd, int *rgb) {
 
 	char buf[PIXIE_CHAIN_LEN*3];
 	for(int i = 0; i < PIXIE_CHAIN_LEN; i++) {
+		char r = rgb[i];
+		char g = rgb[i] >> 8;
+		char b = rgb[i] >> 16;
+
 		buf[i*3] = r;
 		buf[i*3 + 1] = g;
 		buf[i*3 + 2] = b;
@@ -196,7 +196,7 @@ int iolink_thread_main(int argc, char *argv[]) {
 	}
 
 	int pixie_fd = open_serial(PIXIE_DEVICE_PATH);
-	int pixie_color = 0; // Default color is off
+	int pixie_color[] = { 0, 0 }; // Default color is off
 	if (pixie_fd < 0) {
 		err(1, "can't open %s", PIXIE_DEVICE_PATH);
 	}
@@ -249,7 +249,7 @@ int iolink_thread_main(int argc, char *argv[]) {
 			//PX4_ERR("[px4_simple_app] Got no data within a second");
 
 			// Ensure that the LEDs don't time out
-			if (pixie_color != 0) {
+			if (pixie_color[0] != 0 || pixie_color[1] != 0) {
 				pixie_write(pixie_fd, pixie_color);
 			}
 
@@ -307,12 +307,13 @@ int iolink_thread_main(int argc, char *argv[]) {
 					px4_arch_gpiowrite(GPIO_ACTIVE_IR, on);
 
 				} else if (cmd.command == VEHICLE_CMD_RGBLED) {
-					pixie_color = (int) cmd.param1;
+					// For two parameters for outer lighting
+					pixie_color[0] = (int) cmd.param1;
+					pixie_color[1] = (int) cmd.param2;
 					pixie_write(pixie_fd, pixie_color);
 
-
 					// Setting onboard color
-					int c = (int) cmd.param2;
+					int c = (int) cmd.param3;
 					ioctl(led_fd, (c & 0xff)? LED_ON : LED_OFF, LED_BLUE | LED_OVERRIDE);
 					ioctl(led_fd, (c & 0xff00)? LED_ON : LED_OFF, LED_GREEN | LED_OVERRIDE);
 					ioctl(led_fd, (c & 0xff0000)? LED_ON : LED_OFF, LED_RED | LED_OVERRIDE);

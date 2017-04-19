@@ -1304,6 +1304,11 @@ PX4FMU::cycle()
 
 				/* output to the servos */
 				for (size_t i = 0; i < mixed_num_outputs; i++) {
+					// Very low are no throttle should have the motors turn off
+					if(pwm_limited[i] < 1010) {
+						pwm_limited[i] = 900;
+					}
+
 					pwm_output_set(i, pwm_limited[i]);
 				}
 

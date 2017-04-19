@@ -664,7 +664,7 @@ then
 	if [ "x$MAVLINK_F" == xnone ]
 	then
 	else
-		mavlink start ${MAVLINK_F}
+		#mavlink start ${MAVLINK_F}
 	fi
 	unset MAVLINK_F
 
