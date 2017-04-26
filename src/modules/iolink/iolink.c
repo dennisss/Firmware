@@ -53,6 +53,7 @@
 
 #include "drivers/drv_pwm_output.h"
 #include "drivers/drv_board_led.h"
+#include "drivers/drv_hrt.h"
 //#include <drivers/drv_gpio.h>
 
 
@@ -99,9 +100,9 @@ void pixie_write(int fd, int *rgb) {
 
 	char buf[PIXIE_CHAIN_LEN*3];
 	for(int i = 0; i < PIXIE_CHAIN_LEN; i++) {
-		char r = rgb[i];
+		char r = rgb[i] >> 16;
 		char g = rgb[i] >> 8;
-		char b = rgb[i] >> 16;
+		char b = rgb[i];
 
 		buf[i*3] = r;
 		buf[i*3 + 1] = g;
@@ -179,6 +180,8 @@ open_serial(const char *dev)
 
 
 
+static hrt_abstime lastPixieTime;
+
 int iolink_thread_main(int argc, char *argv[]) {
 	int ret;
 	const char *dev = PWM_OUTPUT0_DEVICE_PATH;
@@ -239,9 +242,11 @@ int iolink_thread_main(int argc, char *argv[]) {
 
 	int error_counter = 0;
 
+	bool pixieDirty = false;
+
 	while (true) {
 		/* wait for sensor update of 1 file descriptor for 1000 ms (1 second) */
-		int poll_ret = px4_poll(fds, 1, 500);
+		int poll_ret = px4_poll(fds, 1, 50);
 
 		/* handle the poll result */
 		if (poll_ret == 0) {
@@ -249,9 +254,6 @@ int iolink_thread_main(int argc, char *argv[]) {
 			//PX4_ERR("[px4_simple_app] Got no data within a second");
 
 			// Ensure that the LEDs don't time out
-			if (pixie_color[0] != 0 || pixie_color[1] != 0) {
-				pixie_write(pixie_fd, pixie_color);
-			}
 
 		} else if (poll_ret < 0) {
 			/* this is seriously bad - should be an emergency */
@@ -310,7 +312,7 @@ int iolink_thread_main(int argc, char *argv[]) {
 					// For two parameters for outer lighting
 					pixie_color[0] = (int) cmd.param1;
 					pixie_color[1] = (int) cmd.param2;
-					pixie_write(pixie_fd, pixie_color);
+					pixieDirty = true;
 
 					// Setting onboard color
 					int c = (int) cmd.param3;
@@ -322,6 +324,19 @@ int iolink_thread_main(int argc, char *argv[]) {
 
 			}
 
+		}
+
+
+
+		hrt_abstime t = hrt_absolute_time();
+
+		if (
+			((pixie_color[0] != 0 || pixie_color[1] != 0) && (t - lastPixieTime > 50000)) // Lazy refresh persistent value
+			|| (pixieDirty && t - lastPixieTime > 10000)) { // Active refresh throttled by some small minimum delay between writes
+
+			pixie_write(pixie_fd, pixie_color);
+			lastPixieTime = t;
+			pixieDirty = false;
 		}
 	}
 }
