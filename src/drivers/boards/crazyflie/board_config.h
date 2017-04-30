@@ -79,6 +79,9 @@
 
 #define GPIO_NRF_TXEN			(GPIO_INPUT|GPIO_PULLUP|GPIO_EXTI|GPIO_PORTA|GPIO_PIN4)
 
+#define RC_SERIAL_PORT		"/dev/ttyS0"
+#define INVERT_RC_INPUT(_invert_true)		while(0)
+
 
 /*
  * I2C busses
