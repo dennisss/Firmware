@@ -2,8 +2,6 @@
 # These are settings common to all tansa vehicles
 #
 
-param hold
-
 
 # 1 for ATTQ/LPE, 2 for EKF
 param set SYS_MC_EST_GROUP 1
@@ -62,5 +60,3 @@ param set RC_KILLSWITCH_TH 0.6
 param set MPC_MANTHR_MIN 0
 
 # TODO: Also hardcode flight modes?
-
-param unhold
