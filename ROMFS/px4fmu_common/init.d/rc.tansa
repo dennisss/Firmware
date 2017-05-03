@@ -59,6 +59,8 @@ param set RC_MAP_KILL_SW 7
 
 param set RC_KILLSWITCH_TH 0.6
 
+param set MPC_MANTHR_MIN 0
+
 # TODO: Also hardcode flight modes?
 
 param unhold
