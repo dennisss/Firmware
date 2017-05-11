@@ -116,7 +116,7 @@ Battery::filterVoltage(float voltage_v)
 	}
 
 	// TODO: inspect that filter performance
-	const float filtered_next = _voltage_filtered_v * 0.99f + voltage_v * 0.01f;
+	const float filtered_next = _voltage_filtered_v * 0.98f + voltage_v * 0.02f;
 
 	if (PX4_ISFINITE(filtered_next)) {
 		_voltage_filtered_v = filtered_next;
@@ -131,7 +131,7 @@ Battery::filterCurrent(float current_a)
 	}
 
 	// ADC poll is at 100Hz, this will perform a low pass over approx 500ms
-	const float filtered_next = _current_filtered_a * 0.98f + current_a * 0.02f;
+	const float filtered_next = _current_filtered_a * 0.96f + current_a * 0.04f;
 
 	if (PX4_ISFINITE(filtered_next)) {
 		_current_filtered_a = filtered_next;

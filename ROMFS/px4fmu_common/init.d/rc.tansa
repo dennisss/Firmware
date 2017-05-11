@@ -4,7 +4,7 @@
 
 
 # 1 for ATTQ/LPE, 2 for EKF
-param set SYS_MC_EST_GROUP 1
+param set SYS_MC_EST_GROUP 2
 
 
 # Don't use the magnetometer for anything
@@ -18,6 +18,8 @@ param set EKF2_HGT_MODE 3
 
 param set EKF2_EVP_NOISE 0.001
 param set EKF2_EVA_NOISE 0.001
+param set EKF2_EV_DELAY 50
+param set EKF2_ACC_NOISE 0.5
 
 # Ensuring that mocap is enabled in both estimators
 param set ATT_EXT_HDG_M 2
@@ -58,5 +60,7 @@ param set RC_MAP_KILL_SW 7
 param set RC_KILLSWITCH_TH 0.6
 
 param set MPC_MANTHR_MIN 0
+
+param set SYS_LOGGER 1
 
 # TODO: Also hardcode flight modes?
