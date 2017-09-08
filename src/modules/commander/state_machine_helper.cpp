@@ -566,6 +566,15 @@ bool set_nav_state(struct vehicle_status_s *status,
 	reset_link_loss_globals(armed, old_failsafe, rc_loss_act);
 	reset_link_loss_globals(armed, old_failsafe, data_link_loss_act);
 
+	// RC should always be required
+	if (rc_lost && is_armed) {
+		enable_failsafe(status, old_failsafe, mavlink_log_pub, reason_no_rc);
+
+		set_rc_loss_nav_state(status, armed, status_flags, rc_loss_act);
+
+		return status->nav_state != nav_state_old;
+	}
+
 	/* evaluate main state to decide in normal (non-failsafe) mode */
 	switch (internal_state->main_state) {
 	case commander_state_s::MAIN_STATE_ACRO:

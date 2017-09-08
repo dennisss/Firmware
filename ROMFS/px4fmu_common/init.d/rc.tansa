@@ -4,7 +4,7 @@
 
 
 # 1 for ATTQ/LPE, 2 for EKF
-param set SYS_MC_EST_GROUP 2
+param set SYS_MC_EST_GROUP 1
 
 
 # Don't use the magnetometer for anything
@@ -43,6 +43,10 @@ param set COM_OF_LOSS_T 0.25
 
 # With RC, do the same
 param set COM_OBL_RC_ACT 4
+
+# Without RC, we have 0 control, so do whatever is needed to turn off the system (lockdown)
+param set NAV_RCL_ACT 6
+
 
 param set PWM_MIN 1000
 param set PWM_MAX 2000
